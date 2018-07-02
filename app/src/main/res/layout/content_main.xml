@@ -6,12 +6,26 @@
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".MainActivity"
+    tools:layout_editor_absoluteY="81dp"
     tools:showIn="@layout/activity_main">
 
     <Button
         android:id="@+id/ToGalerieButton"
-        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:text="TO Galerie"/>
+        android:layout_height="wrap_content"
+        android:layout_marginStart="64dp"
+        android:text="TO Galerie"
+        app:layout_constraintBaseline_toBaselineOf="@+id/toCamera"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/toCamera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="64dp"
+        android:layout_marginTop="52dp"
+        android:text="to Camera"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
