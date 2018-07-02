@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -19,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        Toast.makeText(this, "Geht", Toast.LENGTH_SHORT).show();
 
         Button toGal = (Button) findViewById(R.id.ToGalerieButton);
         toGal.setOnClickListener(new View.OnClickListener() {
