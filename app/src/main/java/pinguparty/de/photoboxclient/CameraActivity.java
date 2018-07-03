@@ -3,8 +3,11 @@ package pinguparty.de.photoboxclient;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -18,10 +21,10 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -30,7 +33,6 @@ import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.File;
@@ -44,7 +46,8 @@ import java.util.List;
 
 public class CameraActivity extends AppCompatActivity {
     private static final String TAG = "PhotoBoxCameraActivity";
-    private Button takePictureButton;
+    private FloatingActionButton takePictureButton;
+    private FloatingActionButton toGalleryButton;
     private TextureView textureView;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     static {
@@ -67,19 +70,31 @@ public class CameraActivity extends AppCompatActivity {
     private HandlerThread mBackgroundThread;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
         textureView = (TextureView) findViewById(R.id.texture);
         assert textureView != null;
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        actionBar.hide();
         textureView.setSurfaceTextureListener(textureListener);
-        takePictureButton = (Button) findViewById(R.id.btn_takepicture);
+        takePictureButton = (FloatingActionButton) findViewById(R.id.btn_takepicture);
         assert takePictureButton != null;
         takePictureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 takePicture();
+            }
+        });
+        toGalleryButton = (FloatingActionButton) findViewById(R.id.btn_toGallery);
+        assert toGalleryButton != null;
+        toGalleryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(CameraActivity.this,GalleryActivity.class);
+                startActivity(intent);
             }
         });
     }
@@ -170,7 +185,7 @@ public class CameraActivity extends AppCompatActivity {
             // Orientation
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
-            final File file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
+            final File file = new File("http://192.168.4.1/FLASH_DRIVE"+"/pic.jpg");
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
@@ -277,6 +292,7 @@ public class CameraActivity extends AppCompatActivity {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+        transformImage(textureView.getWidth(), textureView.getHeight());
         Log.e(TAG, "openCamera X");
     }
         protected void updatePreview() {
@@ -316,6 +332,7 @@ public class CameraActivity extends AppCompatActivity {
         Log.e(TAG, "onResume");
         startBackgroundThread();
         if (textureView.isAvailable()) {
+            transformImage(textureView.getWidth(), textureView.getHeight());
             openCamera();
         } else {
             textureView.setSurfaceTextureListener(textureListener);
@@ -324,9 +341,36 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         Log.e(TAG, "onPause");
-        //closeCamera();
+        closeCamera();
         stopBackgroundThread();
         super.onPause();
+    }
+
+    private void transformImage(int width, int height) {
+        if (textureView == null) {
+
+            return;
+        } else try {
+            {
+                Matrix matrix = new Matrix();
+                int rotation = getWindowManager().getDefaultDisplay().getRotation();
+                RectF textureRectF = new RectF(0, 0, width, height);
+                RectF previewRectF = new RectF(0, 0, textureView.getHeight(), textureView.getWidth());
+                float centerX = textureRectF.centerX();
+                float centerY = textureRectF.centerY();
+                if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+                    previewRectF.offset(centerX - previewRectF.centerX(), centerY - previewRectF.centerY());
+                    matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL);
+                    float scale = Math.max((float) width / width, (float) height / width);
+                    matrix.postScale(scale, scale, centerX, centerY);
+                    matrix.postRotate(90 * (rotation - 2), centerX, centerY);
+                }
+                textureView.setTransform(matrix);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 }
 
